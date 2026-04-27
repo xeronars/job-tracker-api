@@ -324,6 +324,42 @@ app.post('/api/applications/:id/contacts', requireAuth, async (req, res) => {
     }
 });
 
+// PUT /api/applications/:id/contacts/:contactId
+app.put('/api/applications/:id/contacts/:contactId', requireAuth, async (req, res) => {
+    try {
+        const application = await Application.findOne({
+            where: { id: req.params.id, userId: req.user.id }
+        });
+
+        if (!application) {
+            return res.status(404).json({ error: 'Application not found' });
+        }
+
+        const contact = await Contact.findOne({
+            where: { id: req.params.contactId, applicationId: req.params.id }
+        });
+
+        if (!contact) {
+            return res.status(404).json({ error: 'Contact not found' });
+        }
+
+        const { name, email, phone, company } = req.body;
+
+        await contact.update({
+            name: name || contact.name,
+            email: email !== undefined ? email : contact.email,
+            phone: phone !== undefined ? phone : contact.phone,
+            company: company !== undefined ? company : contact.company
+        });
+
+        res.json({ message: 'Contact updated successfully', contact });
+
+    } catch (error) {
+        console.error('Error updating contact:', error);
+        res.status(500).json({ error: 'Failed to update contact' });
+    }
+});
+
 // DELETE /api/applications/:id/contacts/:contactId
 app.delete('/api/applications/:id/contacts/:contactId', requireAuth, async (req, res) => {
     try {
@@ -383,8 +419,12 @@ app.use((req, res) => {
 
 // START SERVER
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Health check: http://localhost:${PORT}/health`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`Health check: http://localhost:${PORT}/health`);
+    });
+}
+
+module.exports = app;
