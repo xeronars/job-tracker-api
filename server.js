@@ -406,27 +406,6 @@ app.get('/api/admin/applications', requireAuth, requireAdmin, async (req, res) =
     }
 });
 
-// Temporary admin setup endpoint - remove after use
-app.post('/api/setup-admin', async (req, res) => {
-    try {
-        const existing = await User.findOne({ where: { role: 'admin' } });
-        if (existing) {
-            return res.status(400).json({ error: 'Admin already exists' });
-        }
-        const hashedPassword = await bcrypt.hash('admin123', 10);
-        const admin = await User.create({
-            username: 'admin',
-            email: 'admin@example.com',
-            password: hashedPassword,
-            role: 'admin'
-        });
-        res.status(201).json({ message: 'Admin created successfully', email: admin.email });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to create admin' });
-    }
-});
-
 // ERROR HANDLING
 
 app.use((err, req, res, next) => {
